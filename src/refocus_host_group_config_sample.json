@@ -1,0 +1,18 @@
+[
+    {
+        "name": "Social Media",
+        "hostnames": [
+            "instagram.com",
+            "facebook.com",
+            "linkedin.com"
+        ]
+    },
+    {
+        "name": "Streaming",
+        "hostnames": [
+            "youtube.com",
+            "lookmovie2.to",
+            "soap2day.tf"
+        ]
+    }
+]
