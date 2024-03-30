@@ -27,6 +27,13 @@ impl std::default::Default for HostnameGroup
     }
 }
 
+pub fn create_tmp_hosts_file() -> Result<(), Box<dyn Error>>
+{
+    let hosts_content = read_to_string(HOSTS_FILE_PATH)?;
+    fs::write(TMP_HOSTS_FILE_PATH, &hosts_content)?;
+    Ok(())
+}
+
 pub fn get_config_file_dir() -> Result<PathBuf, Box<dyn Error>>
 {
     let project_dirs = ProjectDirs::from("rs", APPNAME, APPNAME).unwrap();

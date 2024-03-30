@@ -6,12 +6,11 @@ fn main() {
 
     info!("Copy from {} to {}", HOSTS_FILE_PATH, TMP_HOSTS_FILE_PATH);
 
-    if let Err(_) = fs::copy(HOSTS_FILE_PATH, TMP_HOSTS_FILE_PATH)
+    if let Err(_) = create_tmp_hosts_file()
     {
         eprintln!("Insufficient permission to backup {}", HOSTS_FILE_PATH);
         process::exit(1);
     }
-
     let mut hosts_content = read_hosts().unwrap();
     let hostgroups = read_hostname_groups_config().unwrap();
 
