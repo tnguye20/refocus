@@ -3,10 +3,10 @@ use log::{info, trace};
 use serde::{Serialize, Deserialize};
 use directories::ProjectDirs;
 
-pub static HOSTS_FILE_PATH: &str = "/tmp/hosts";
-pub static HOSTS_GROUP_CONFIG_PATH: &str = "/tmp/refocus_host_group_config.json";
-pub static HOSTNAME_ANCHOR: &str = "refocus.dev";
 pub static APPNAME: &str = "refocus";
+pub static HOSTS_FILE_PATH: &str = "/etc/hosts";
+pub static TMP_HOSTS_FILE_PATH: &str = "/tmp/hosts";
+pub static HOSTNAME_ANCHOR: &str = "refocus.dev";
 pub static HOSTNAME_GROUPS_CONFIG_FILENAME: &str = "refocus_hostnames_group.json";
 
 pub type HostnameGroups = Vec<HostnameGroup>;

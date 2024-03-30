@@ -1,8 +1,17 @@
-use std::fs;
+use std::{fs, process};
 use log::{info, trace};
 use refocus::*;
 
 fn main() {
+
+    info!("Copy from {} to {}", HOSTS_FILE_PATH, TMP_HOSTS_FILE_PATH);
+
+    if let Err(_) = fs::copy(HOSTS_FILE_PATH, TMP_HOSTS_FILE_PATH)
+    {
+        eprintln!("Insufficient permission to backup {}", HOSTS_FILE_PATH);
+        process::exit(1);
+    }
+
     let mut hosts_content = read_hosts().unwrap();
     let hostgroups = read_hostname_groups_config().unwrap();
 
@@ -25,7 +34,7 @@ fn main() {
         }
         trace!("New hosts content: \n {:?}", new_hosts_content);
 
-        fs::write(HOSTS_FILE_PATH, new_hosts_content).expect("Unable to write hosts file");
+        fs::write(TMP_HOSTS_FILE_PATH, new_hosts_content).expect("Unable to write hosts file");
     }
     else
     {
@@ -33,6 +42,12 @@ fn main() {
         hosts_content.push_str(&construct_refocus_line(&hostgroups));
         trace!("New hosts content: \n {:?}", hosts_content);
 
-        fs::write(HOSTS_FILE_PATH, hosts_content).expect("Unable to write hosts file");
+        fs::write(TMP_HOSTS_FILE_PATH, hosts_content).expect("Unable to write hosts file");
+    }
+
+    if let Err(_) = fs::copy(TMP_HOSTS_FILE_PATH, HOSTS_FILE_PATH)
+    {
+        eprintln!("Insufficient permission to overwrite {}", HOSTS_FILE_PATH);
+        process::exit(1);
     }
 }
