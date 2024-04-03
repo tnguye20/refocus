@@ -30,7 +30,7 @@ impl fmt::Display for HostnameGroup {
             .iter()
             .map(|hostname| "  ".to_string() + hostname)
             .collect();
-        write!(f, "Group: {}\n{}\n", self.name, padded_hostnames.join("\n"))
+        write!(f, "{}\n{}\n", self.name, padded_hostnames.join("\n"))
     }
 }
 
