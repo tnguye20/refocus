@@ -1,42 +1,18 @@
-use log::{info, trace};
 use refocus::*;
-use std::{fs, process};
+use std::process;
 
 fn main() {
-    info!("Copy from {} to {}", HOSTS_FILE_PATH, TMP_HOSTS_FILE_PATH);
+    let result = create_tmp_hosts_file()
+        .and(generate_new_hosts_file())
+        .and(copy_to_etc());
 
-    if create_tmp_hosts_file().is_err() {
-        eprintln!("Insufficient permission to backup {}", HOSTS_FILE_PATH);
-        process::exit(1);
-    }
-    let mut hosts_content = read_hosts().unwrap();
-    let hostgroups = read_hostname_groups_config().unwrap();
-
-    if hosts_content.contains(HOSTNAME_ANCHOR) {
-        info!("Refocus Line found. Finding line to regenerate");
-        let mut new_hosts_content = String::from("");
-        for line in hosts_content.lines() {
-            if line.contains(HOSTNAME_ANCHOR) {
-                new_hosts_content.push_str(&construct_refocus_line(&hostgroups));
-                new_hosts_content.push('\n');
-            } else {
-                new_hosts_content.push_str(line);
-                new_hosts_content.push('\n');
-            }
+    match result {
+        Ok(_) => {
+            println!("Refocus ran successful");
         }
-        trace!("New hosts content: \n {:?}", new_hosts_content);
-
-        fs::write(TMP_HOSTS_FILE_PATH, new_hosts_content).expect("Unable to write hosts file");
-    } else {
-        info!("Refocus Line not found. Creating one and appending at end of file");
-        hosts_content.push_str(&construct_refocus_line(&hostgroups));
-        trace!("New hosts content: \n {:?}", hosts_content);
-
-        fs::write(TMP_HOSTS_FILE_PATH, hosts_content).expect("Unable to write hosts file");
-    }
-
-    if copy_to_etc().is_err() {
-        eprintln!("Insufficient permission to overwrite {}", HOSTS_FILE_PATH);
-        process::exit(1);
+        Err(e) => {
+            eprintln!("Failed to execute refocus: {}", e);
+            process::exit(1);
+        }
     }
 }

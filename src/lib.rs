@@ -37,9 +37,12 @@ impl std::default::Default for HostnameGroup {
 }
 
 pub fn create_tmp_hosts_file() -> Result<(), Box<dyn Error>> {
-    let hosts_content = read_to_string(HOSTS_FILE_PATH)?;
-    fs::write(TMP_HOSTS_FILE_PATH, hosts_content)?;
-    Ok(())
+    let result =
+        read_to_string(HOSTS_FILE_PATH).and_then(|content| fs::write(TMP_HOSTS_FILE_PATH, content));
+    match result {
+        Ok(_) => Ok(()),
+        Err(_) => Err("Failed to create tmp hosts file".into()),
+    }
 }
 
 pub fn get_config_file_dir() -> Result<PathBuf, Box<dyn Error>> {
@@ -51,8 +54,10 @@ pub fn get_config_file_dir() -> Result<PathBuf, Box<dyn Error>> {
 }
 
 pub fn read_hosts() -> Result<String, Box<dyn Error>> {
-    let hosts_content = read_to_string(HOSTS_FILE_PATH)?;
-    Ok(hosts_content)
+    match read_to_string(HOSTS_FILE_PATH) {
+        Ok(hosts_content) => Ok(hosts_content),
+        Err(_) => Err("Failed to read hosts file".into()),
+    }
 }
 
 pub fn read_hostname_groups_config() -> Result<HostnameGroups, Box<dyn Error>> {
@@ -107,7 +112,37 @@ pub fn copy_to_etc() -> Result<(), Box<dyn Error>> {
         .output()?;
 
     if !out.status.success() {
-        panic!("Failed to copy to /etc/hosts");
+        return Err("Failed to copy to /etc/hosts".into());
+    }
+
+    Ok(())
+}
+
+pub fn generate_new_hosts_file() -> Result<(), Box<dyn Error>> {
+    let mut hosts_content = read_hosts()?;
+    let hostgroups = read_hostname_groups_config()?;
+
+    if hosts_content.contains(HOSTNAME_ANCHOR) {
+        info!("Refocus Line found. Finding line to regenerate");
+        let mut new_hosts_content = String::from("");
+        for line in hosts_content.lines() {
+            if line.contains(HOSTNAME_ANCHOR) {
+                new_hosts_content.push_str(&construct_refocus_line(&hostgroups));
+                new_hosts_content.push('\n');
+            } else {
+                new_hosts_content.push_str(line);
+                new_hosts_content.push('\n');
+            }
+        }
+        trace!("New hosts content: \n {:?}", new_hosts_content);
+
+        fs::write(TMP_HOSTS_FILE_PATH, new_hosts_content)?;
+    } else {
+        info!("Refocus Line not found. Creating one and appending at end of file");
+        hosts_content.push_str(&construct_refocus_line(&hostgroups));
+        trace!("New hosts content: \n {:?}", hosts_content);
+
+        fs::write(TMP_HOSTS_FILE_PATH, hosts_content)?;
     }
 
     Ok(())
