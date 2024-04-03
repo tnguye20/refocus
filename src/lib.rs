@@ -98,8 +98,6 @@ pub fn construct_refocus_line(hostgroups: &HostnameGroups) -> String {
             }
         }
     }
-    refocus_line.push('\n');
-
     trace!("Refocus line: {:?}", refocus_line);
     refocus_line
 }
@@ -110,11 +108,9 @@ pub fn copy_to_etc() -> Result<(), Box<dyn Error>> {
         .arg(TMP_HOSTS_FILE_PATH)
         .arg(HOSTS_FILE_PATH)
         .output()?;
-
     if !out.status.success() {
         return Err("Failed to copy to /etc/hosts".into());
     }
-
     Ok(())
 }
 
