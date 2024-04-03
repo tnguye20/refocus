@@ -46,7 +46,13 @@ impl fmt::Display for HostnameGroup {
         } else {
             ""
         };
-        write!(f, "{}{}\n{}\n", self.name, disabled, padded_hostnames.join("\n"))
+        write!(
+            f,
+            "{}{}\n{}\n",
+            self.name,
+            disabled,
+            padded_hostnames.join("\n")
+        )
     }
 }
 
@@ -182,7 +188,5 @@ pub fn overwrite_config_file(hostgroups: &HostnameGroups) -> Result<(), Box<dyn 
 }
 
 pub fn split_args(args: &str) -> Vec<String> {
-    args.split(',')
-        .map(|x| x.to_lowercase())
-        .collect()
+    args.split(',').map(|x| x.to_lowercase()).collect()
 }

@@ -86,7 +86,11 @@ fn main() {
                     for group in groups.iter_mut() {
                         if group.name.to_lowercase() == toggle_group.to_lowercase() {
                             group.disabled = Some(!group.disabled.unwrap_or(false));
-                            println!("Toggled group: {}. Disabled: {}", group.name, group.disabled.unwrap_or(false));
+                            println!(
+                                "Toggled group: {}. Disabled: {}",
+                                group.name,
+                                group.disabled.unwrap_or(false)
+                            );
                         }
                     }
                 }
@@ -106,10 +110,7 @@ fn main() {
     if !args.group.is_empty() && !args.add.is_empty() {
         match read_hostname_groups_config() {
             Ok(mut groups) => {
-                let new_hostnames = split_args(
-                        &args.add
-                        .trim()
-                    )
+                let new_hostnames = split_args(args.add.trim())
                     .into_iter()
                     // .replace(' ', "")
                     .filter(|hostname| hostname.contains('.'))
