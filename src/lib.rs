@@ -21,6 +21,17 @@ pub type HostnameGroups = Vec<HostnameGroup>;
 pub struct HostnameGroup {
     pub name: String,
     pub hostnames: Vec<String>,
+    pub disabled: Option<bool>,
+}
+
+impl HostnameGroup {
+    pub fn new(name: String, hostnames: Vec<String>) -> Self {
+        Self {
+            name,
+            hostnames,
+            disabled: Some(false),
+        }
+    }
 }
 
 impl fmt::Display for HostnameGroup {
@@ -30,7 +41,12 @@ impl fmt::Display for HostnameGroup {
             .iter()
             .map(|hostname| "  ".to_string() + hostname)
             .collect();
-        write!(f, "{}\n{}\n", self.name, padded_hostnames.join("\n"))
+        let disabled = if self.disabled.unwrap_or(false) {
+            " (disabled)"
+        } else {
+            ""
+        };
+        write!(f, "{}{}\n{}\n", self.name, disabled, padded_hostnames.join("\n"))
     }
 }
 
@@ -44,6 +60,7 @@ impl std::default::Default for HostnameGroup {
                 "twitter.com".to_string(),
                 "linkedin.com".to_string(),
             ],
+            disabled: Some(false),
         }
     }
 }
@@ -98,6 +115,9 @@ pub fn construct_refocus_line(hostgroups: &HostnameGroups) -> String {
     info!("Generating Refocus hosts line");
     let mut refocus_line = "127.0.0.1 ".to_owned() + HOSTNAME_ANCHOR + " ";
     for group in hostgroups {
+        if group.disabled.unwrap_or(false) {
+            continue;
+        }
         for hostname in &group.hostnames {
             refocus_line.push_str(hostname);
             refocus_line.push(' ');
@@ -159,4 +179,10 @@ pub fn overwrite_config_file(hostgroups: &HostnameGroups) -> Result<(), Box<dyn 
     let content = serde_json::to_string_pretty(&hostgroups)?;
     fs::write(path, content)?;
     Ok(())
+}
+
+pub fn split_args(args: &str) -> Vec<String> {
+    args.split(',')
+        .map(|x| x.to_lowercase())
+        .collect()
 }

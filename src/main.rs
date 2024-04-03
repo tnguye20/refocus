@@ -29,6 +29,10 @@ struct Args {
     #[arg(short, long, default_value_t = String::from(""))]
     delete: String,
 
+    /// toogle hostgroup(s)
+    #[arg(short, long, default_value_t = String::from(""))]
+    toggle: String,
+
     /// execute refocus
     #[arg(short, long, default_value_t = true)]
     execute: bool,
@@ -73,16 +77,43 @@ fn main() {
         process::exit(1);
     }
 
+    if !args.toggle.is_empty() {
+        match read_hostname_groups_config() {
+            Ok(mut groups) => {
+                let toggle_groups = split_args(&args.toggle);
+
+                for toggle_group in &toggle_groups {
+                    for group in groups.iter_mut() {
+                        if group.name.to_lowercase() == toggle_group.to_lowercase() {
+                            group.disabled = Some(!group.disabled.unwrap_or(false));
+                            println!("Toggled group: {}. Disabled: {}", group.name, group.disabled.unwrap_or(false));
+                        }
+                    }
+                }
+
+                if overwrite_config_file(&groups).is_err() {
+                    eprintln!("Failed to update hostname groups config");
+                    process::exit(1);
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to read hostname groups config: {}", e);
+                process::exit(1);
+            }
+        }
+    }
+
     if !args.group.is_empty() && !args.add.is_empty() {
         match read_hostname_groups_config() {
             Ok(mut groups) => {
-                let new_hostnames: Vec<String> = args
-                    .add
-                    .replace(' ', "")
-                    .split(',')
+                let new_hostnames = split_args(
+                        &args.add
+                        .trim()
+                    )
+                    .into_iter()
+                    // .replace(' ', "")
                     .filter(|hostname| hostname.contains('.'))
-                    .map(|hostname| hostname.to_lowercase())
-                    .collect();
+                    .collect::<Vec<String>>();
 
                 if let Some(group) = groups
                     .iter_mut()
@@ -90,10 +121,7 @@ fn main() {
                 {
                     group.hostnames.extend(new_hostnames);
                 } else {
-                    groups.push(HostnameGroup {
-                        name: args.group,
-                        hostnames: new_hostnames,
-                    })
+                    groups.push(HostnameGroup::new(args.group, new_hostnames));
                 }
 
                 if overwrite_config_file(&groups).is_err() {
@@ -111,12 +139,7 @@ fn main() {
     if !args.delete.is_empty() {
         match read_hostname_groups_config() {
             Ok(mut groups) => {
-                let delete_hostnames: Vec<String> = args
-                    .delete
-                    .replace(' ', "")
-                    .split(',')
-                    .map(|hostname| hostname.to_lowercase())
-                    .collect();
+                let delete_hostnames: Vec<String> = split_args(&args.delete);
 
                 for delete_hostname in delete_hostnames {
                     for group in groups.iter_mut() {
