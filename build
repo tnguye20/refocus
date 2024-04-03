@@ -1,0 +1,15 @@
+!#/bin/sh
+
+# Build the project
+cargo build --release;
+
+# Capture the return code
+return_code=$?
+
+# Check the return code for build process and copy files to the local bin
+if [ $return_code -eq 0 ]; then
+    echo "Command succeeded; Deploying to local bin";
+    sudo cp $(pwd)/target/release/refocus /usr/local/bin/refocus;
+else
+    echo "Build failed with return code $return_code"
+fi

@@ -1,7 +1,7 @@
+use core::fmt;
 use directories::ProjectDirs;
 use log::{info, trace};
 use serde::{Deserialize, Serialize};
-use core::fmt;
 use std::{
     error::Error,
     fs::{self, read_to_string, File},
@@ -25,7 +25,9 @@ pub struct HostnameGroup {
 
 impl fmt::Display for HostnameGroup {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let padded_hostnames: Vec<String> = self.hostnames.iter()
+        let padded_hostnames: Vec<String> = self
+            .hostnames
+            .iter()
             .map(|hostname| "  ".to_string() + hostname)
             .collect();
         write!(f, "Group: {}\n{}\n", self.name, padded_hostnames.join("\n"))

@@ -1,6 +1,6 @@
+use clap::Parser;
 use refocus::*;
 use std::process;
-use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -37,8 +37,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    if args.config
-    {
+    if args.config {
         match get_config_file_dir() {
             Ok(path) => {
                 println!("Config file path: {:?}", path);
@@ -51,14 +50,15 @@ fn main() {
         return;
     }
 
-    if args.groups
-    {
+    if args.groups {
         match read_hostname_groups_config() {
             Ok(groups) => {
-                groups.iter()
-                    .filter(|group| args.filter.is_empty() || group.name.to_lowercase().contains(&args.filter))
+                groups
+                    .iter()
+                    .filter(|group| {
+                        args.filter.is_empty() || group.name.to_lowercase().contains(&args.filter)
+                    })
                     .for_each(|group| println!("{}", group));
-
             }
             Err(e) => {
                 eprintln!("Failed to read hostname groups config: {}", e);
@@ -68,32 +68,28 @@ fn main() {
         return;
     }
 
-    if !args.add.is_empty() && args.group.is_empty()
-    {
+    if !args.add.is_empty() && args.group.is_empty() {
         eprintln!("Cannot add hostname to group without specifying group");
         process::exit(1);
     }
 
-    if !args.group.is_empty() && !args.add.is_empty()
-    {
+    if !args.group.is_empty() && !args.add.is_empty() {
         match read_hostname_groups_config() {
             Ok(mut groups) => {
-
-                let new_hostnames: Vec<String> = args.add
-                    .replace(" ", "")
+                let new_hostnames: Vec<String> = args
+                    .add
+                    .replace(' ', "")
                     .split(',')
-                    .into_iter()
-                    .filter(|hostname| hostname.contains("."))
+                    .filter(|hostname| hostname.contains('.'))
                     .map(|hostname| hostname.to_lowercase())
                     .collect();
 
-                if let Some(group) = groups.iter_mut()
+                if let Some(group) = groups
+                    .iter_mut()
                     .find(|group| group.name.to_lowercase() == args.group.to_lowercase())
                 {
                     group.hostnames.extend(new_hostnames);
-                }
-                else
-                {
+                } else {
                     groups.push(HostnameGroup {
                         name: args.group,
                         hostnames: new_hostnames,
@@ -112,20 +108,21 @@ fn main() {
         }
     }
 
-    if !args.delete.is_empty()
-    {
+    if !args.delete.is_empty() {
         match read_hostname_groups_config() {
             Ok(mut groups) => {
-                let delete_hostnames: Vec<String> = args.delete
-                    .replace(" ", "")
+                let delete_hostnames: Vec<String> = args
+                    .delete
+                    .replace(' ', "")
                     .split(',')
-                    .into_iter()
                     .map(|hostname| hostname.to_lowercase())
                     .collect();
 
                 for delete_hostname in delete_hostnames {
                     for group in groups.iter_mut() {
-                        group.hostnames.retain(|hostname| hostname.to_lowercase() != delete_hostname);
+                        group
+                            .hostnames
+                            .retain(|hostname| hostname.to_lowercase() != delete_hostname);
                     }
                 }
 
@@ -141,8 +138,7 @@ fn main() {
         }
     }
 
-    if args.execute
-    {
+    if args.execute {
         let result = create_tmp_hosts_file()
             .and(generate_new_hosts_file())
             .and(copy_to_etc());
