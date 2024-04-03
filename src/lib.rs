@@ -1,6 +1,7 @@
 use directories::ProjectDirs;
 use log::{info, trace};
 use serde::{Deserialize, Serialize};
+use core::fmt;
 use std::{
     error::Error,
     fs::{self, read_to_string, File},
@@ -20,6 +21,15 @@ pub type HostnameGroups = Vec<HostnameGroup>;
 pub struct HostnameGroup {
     pub name: String,
     pub hostnames: Vec<String>,
+}
+
+impl fmt::Display for HostnameGroup {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let padded_hostnames: Vec<String> = self.hostnames.iter()
+            .map(|hostname| "  ".to_string() + hostname)
+            .collect();
+        write!(f, "Group: {}\n{}\n", self.name, padded_hostnames.join("\n"))
+    }
 }
 
 impl std::default::Default for HostnameGroup {
@@ -62,8 +72,6 @@ pub fn read_hosts() -> Result<String, Box<dyn Error>> {
 
 pub fn read_hostname_groups_config() -> Result<HostnameGroups, Box<dyn Error>> {
     let path = get_config_file_dir()?;
-
-    println!("Config path: {:?}", path);
 
     match File::open(&path) {
         Ok(mut file) => {
@@ -141,5 +149,12 @@ pub fn generate_new_hosts_file() -> Result<(), Box<dyn Error>> {
         fs::write(TMP_HOSTS_FILE_PATH, hosts_content)?;
     }
 
+    Ok(())
+}
+
+pub fn overwrite_config_file(hostgroups: &HostnameGroups) -> Result<(), Box<dyn Error>> {
+    let path = get_config_file_dir()?;
+    let content = serde_json::to_string_pretty(&hostgroups)?;
+    fs::write(path, content)?;
     Ok(())
 }
